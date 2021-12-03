@@ -16,11 +16,13 @@ class SqliteDatabase():
         self._conn = sqlite3.connect(self.database)
 
     def cursor(self):
-        self._conn.commit()
         return self._conn.cursor()
 
     def close(self):
         return self._conn.close()
+
+    def commit(self):
+        self._conn.commit()
 
 class Field:
     field_type = 'DEFAULT'
@@ -94,13 +96,15 @@ class Model(with_metaclass(ModelBase)):
     table_name = ""
 
     def __init__(self, *args, **kwargs):
-        print(f"INiT {self}, {self.__dict__}")
         for k in kwargs:
             setattr(self, k, kwargs[k])
         
 
     @classmethod
     def select(cls, *fields):
+        if not fields:
+            fields = cls.define_attr()
+
         fields_format = ', '.join(fields)
         query = f"SELECT {fields_format} FROM {cls.table_name}"
 
@@ -124,6 +128,22 @@ class Model(with_metaclass(ModelBase)):
     def insert(cls, **kwargs):
         pass
     
+    @classmethod
+    def where(cls, **expressions):
+        pass
+    
+    @classmethod
+    def define_attr(cls):
+        fields = []
+        for field in cls.__dict__:
+            if (field[:2] != '__' and 
+                field != "table_name" and 
+                field != "model_name"):
+                # only new attr which we create
+                fields.append(cls.__dict__[field].column_name)
+
+        return fields
+
     def delete_instance(self):
         columns = self.__dict__.keys()
         values = map(lambda x: f"'{x}'", self.__dict__.values())
@@ -157,3 +177,11 @@ class Model(with_metaclass(ModelBase)):
 
     def __str__(self):
         return '<Model: %s>' % self.model_name
+
+    def __eq__(self, other):
+        return (
+            other.__class__ == self.__class__ and
+            other.__dict__ == self.__dict__)
+
+    def __ne__(self, other):
+        return not self == other

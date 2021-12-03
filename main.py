@@ -10,28 +10,30 @@ class BaseModel(Model):
 class Artist(BaseModel):
     artist_id = IntegerField(column_name='ArtistId')
     name = TextField(column_name='Name')
-    # class Meta:
+
     table_name = 'Artist'
 
 class Tracks(BaseModel):
     track_id = IntegerField(column_name='TrackId')
     name = TextField(column_name="Name")
+
     table_name = 'Track'
 
+
+print(Tracks == Tracks)
 # SELECT Name, ArtistID FROM Artist;
 
-print(Artist.select('Name', 'ArtistId'))
+# print(Artist.select('Name', 'ArtistId'))
 
-srh = Artist(artist_id=122324, name="Mika")
-srh.save()
+# srh = Artist(artist_id=122324, name="Mika")
+# srh.save()
 
-alish = Artist.create(artist_id=3242394, name='KAlisher')
-print(alish.name)
+# alish = Artist.create(artist_id=3242394, name='KAlisher')
+# print(alish.name)
 
-print(alish.delete_instance())
-print(srh.delete_instance())
+# print(alish.delete_instance())
+# print(srh.delete_instance())
 
-print(Artist.select('Name'))
 # tracks = Tracks.select('Name')
 # print(tracks)
 #INSERT INTO Artist (Name, ArtistId)
