@@ -20,20 +20,18 @@ class Tracks(BaseModel):
 
 # SELECT Name, ArtistID FROM Artist;
 
+print(Artist.select('Name', 'ArtistId'))
 
-srh = Artist(artist_id=1223224531, name="Mika")
-srh.name = 'Karina'
-print(srh.name)
-print(srh.artist_id)
+srh = Artist(artist_id=122324, name="Mika")
 srh.save()
-alish = Artist.create(artist_id=32423942394, name='KAlisher')
 
+alish = Artist.create(artist_id=3242394, name='KAlisher')
 print(alish.name)
-print(alish.artist_id)
 
-artists = Artist.select('Name', 'ArtistId')
-print(artists)
+print(alish.delete_instance())
+print(srh.delete_instance())
 
+print(Artist.select('Name'))
 # tracks = Tracks.select('Name')
 # print(tracks)
 #INSERT INTO Artist (Name, ArtistId)

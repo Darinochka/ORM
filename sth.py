@@ -16,6 +16,7 @@ class SqliteDatabase():
         self._conn = sqlite3.connect(self.database)
 
     def cursor(self):
+        self._conn.commit()
         return self._conn.cursor()
 
     def close(self):
@@ -124,8 +125,21 @@ class Model(with_metaclass(ModelBase)):
         pass
     
     def delete_instance(self):
-        pass
-    
+        columns = self.__dict__.keys()
+        values = map(lambda x: f"'{x}'", self.__dict__.values())
+
+        query = f"DELETE FROM {self.table_name} WHERE "
+
+        delete_values = []
+        for col, val in zip(columns, values):
+            delete_values.append(col + " = " + val)
+
+        query += " AND ".join(delete_values)
+
+        cursor = self.database.cursor()
+        
+        cursor.execute(query)
+
     def save(self):
         columns = ",".join(self.__dict__.keys())
         values = ",".join(map(lambda x: f"'{x}'", self.__dict__.values()))
