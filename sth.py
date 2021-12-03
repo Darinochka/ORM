@@ -31,15 +31,12 @@ class Field:
     def __set_name__(self, owner, name):
         self._name = name
 
-    def __get__(self, obj, inst):
-        print(inst, obj)
-        print(f"GET {self._name}")
-        return self.val
-        # return obj.__dict__[self._name]
+    def __get__(self, obj, instance_type):
+        return obj.__dict__[self._name]
     
     def __set__(self, obj, value):
-        # obj.__dict__[self._name] = value
-        self.val = value
+        obj.__dict__[self._name] = value
+
 
 class _StringField(Field):
     def adapt(self, value):
@@ -59,7 +56,6 @@ class IntegerField(Field):
     field_type = 'INT'
 
     def __set__(self, obj, value):
-        print(f"SET INTEGER: {self}, {obj}")
         if not isinstance(value, int):
             raise TypeError()
         super().__set__(obj, value)
@@ -133,11 +129,9 @@ class Model(with_metaclass(ModelBase)):
         return cursor.fetchall()
 
     @classmethod
-    def create(cls, save=False, **kwargs):
+    def create(cls, **kwargs):
         print("CREATIOn")
         inst = cls(**kwargs)
-        if save:
-            save()
         return inst
     
     @classmethod

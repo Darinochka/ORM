@@ -1,5 +1,5 @@
 # from peewee import *
-from garry import *
+from sth import *
 
 conn = SqliteDatabase('chinook.sqlite')
 
@@ -24,9 +24,12 @@ artists = Artist.select('Name', 'ArtistId')
 srh = Artist(artist_id=1223224534, name="Darina")
 srh.name = 'Karina'
 alish = Artist.create(artist_id=234423, name='Alisher')
+
 print(alish.name)
-print(srh.artist_id)
+print(alish.artist_id)
 print(srh.name)
+print(srh.artist_id)
+
 # tracks = Tracks.select('Name')
 # print(tracks)
 #INSERT INTO Artist (Name, ArtistId)
