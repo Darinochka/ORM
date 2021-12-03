@@ -29,13 +29,13 @@ class Field:
         self.column_name = column_name
 
     def __set_name__(self, owner, name):
-        self._name = name
+        self._name = self.column_name
 
-    def __get__(self, obj, instance_type):
-        return obj.__dict__[self._name]
+    def __get__(self, obj, instance_type=None):
+        return obj.__dict__[self.column_name]
     
     def __set__(self, obj, value):
-        obj.__dict__[self._name] = value
+        obj.__dict__[self.column_name] = value
 
 
 class _StringField(Field):
@@ -70,33 +70,14 @@ class IntegerField(Field):
 
 class ModelBase(type):
     database = ""
+    model_name = ""
 
     def __new__(cls, name, bases, attrs):
-
-        # if name == MODEL_BASE:
-        #     for name, field in attrs.items():
-        #         field._name = name
-        # return type(name, bases, attrs)
-        print("His name ", name, bases, attrs.keys())
-
-        if name == MODEL_BASE or bases[0].__name__ == MODEL_BASE:
-            return super(ModelBase, cls).__new__(cls, name, bases, attrs)
-
-        new_attrs = dict()
-        for field in attrs:
-            try:
-                new_attrs[field] = attrs[field]
-            except AttributeError:
-                continue
-        attrs['_data'] = dict.fromkeys(new_attrs.keys())
-        
         return super(ModelBase, cls).__new__(cls, name, bases, attrs)
 
     def __init__(self, name, bases, attrs):
+        self.model_name = self.__name__
         super(ModelBase, self).__init__(name, bases, attrs)
-        print("Would register class %s now." % self)
-        print("His dict ", attrs.keys())
-
 
     def __repr__(self):
         return '<Model: %s>' % self.__name__
@@ -130,8 +111,8 @@ class Model(with_metaclass(ModelBase)):
 
     @classmethod
     def create(cls, **kwargs):
-        print("CREATIOn")
         inst = cls(**kwargs)
+        inst.save()
         return inst
     
     @classmethod
@@ -141,12 +122,24 @@ class Model(with_metaclass(ModelBase)):
     @classmethod
     def insert(cls, **kwargs):
         pass
-
-    def save(self):
+    
+    def delete_instance(self):
         pass
+    
+    def save(self):
+        columns = ",".join(self.__dict__.keys())
+        values = ",".join(map(lambda x: f"'{x}'", self.__dict__.values()))
 
-    # def __repr__(self):
-    #     return '<Model: %s>' % self.__name__
+        query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({values})"
 
-    # def __str__(self):
-    #     return self.__class__
+        cursor = self.database.cursor()
+        
+        cursor.execute(query)
+
+        return cursor.fetchall()
+
+    def __repr__(self):
+        return '<Model: %s>' % self.model_name
+
+    def __str__(self):
+        return '<Model: %s>' % self.model_name

@@ -19,16 +19,20 @@ class Tracks(BaseModel):
     table_name = 'Track'
 
 # SELECT Name, ArtistID FROM Artist;
-artists = Artist.select('Name', 'ArtistId')
 
-srh = Artist(artist_id=1223224534, name="Darina")
+
+srh = Artist(artist_id=1223224531, name="Mika")
 srh.name = 'Karina'
-alish = Artist.create(artist_id=234423, name='Alisher')
+print(srh.name)
+print(srh.artist_id)
+srh.save()
+alish = Artist.create(artist_id=32423942394, name='KAlisher')
 
 print(alish.name)
 print(alish.artist_id)
-print(srh.name)
-print(srh.artist_id)
+
+artists = Artist.select('Name', 'ArtistId')
+print(artists)
 
 # tracks = Tracks.select('Name')
 # print(tracks)
