@@ -1,4 +1,6 @@
 import sqlite3
+from typing import Union
+
 
 MODEL_BASE = '_metaclass_'
 
@@ -28,8 +30,7 @@ class SqliteDatabase():
 class Field:
     field_type = 'DEFAULT'
 
-    def __init__(self, null=False, unique=False, 
-                 column_name=None, primary_key=False):
+    def __init__(self, null=False, column_name=None):
         self.column_name = column_name
 
     def __set_name__(self, owner, name):
@@ -49,7 +50,7 @@ class _StringField(Field):
 
     def __set__(self, obj, value):
         if not isinstance(value, str):
-            raise TypeError("Please, enter data of STRING type")
+            raise TypeError(f"Please, enter data of {self.field_type} type")
         super().__set__(obj, value)
 
 
@@ -102,14 +103,29 @@ class ModelBase(type):
         return len(self.select()) != 0
     __nonzero__ = __bool__  # Python 2.
 
-class Select:
+
+class ModelSelect:
     def __init__(self, model, *fields):
         self.table_name = model.table_name
         self.database = model.database
         self.column_select = fields
         self.columns = model.columns
-    
-    def execute(self, query):
+        self.operation = "SELECT"
+        self.select()
+
+    def select(self):
+        fields_format = ', '.join(self.column_select)
+        query = f"SELECT {fields_format} FROM {self.table_name}"
+
+        cursor = self.database.cursor()
+
+        cursor.execute(query)
+
+        self.fields = cursor.fetchall()
+
+        return self
+
+    def execute(self, query: str):
         field = self.column_select[0]
         fields_format = ', '.join(self.columns)
 
@@ -123,8 +139,8 @@ class Select:
         )
 
         self.fields = cursor.fetchall()
-        
-        return self.fields
+
+        return self
 
     def __eq__(self, attr):
 
@@ -166,30 +182,6 @@ class Select:
     def __contains__(self, item):
         return item in self.fields
 
-
-class ModelDelete(Select):
-    def __init__(self, model, *fields):
-        super().__init__(model, *fields)
-        self.operation = 'DELETE'
-
-class ModelSelect(Select):
-    def __init__(self, model, *fields):
-        super().__init__(model, *fields)
-        self.operation = 'SELECT'
-        self.select()
-
-    def select(self):
-        fields_format = ', '.join(self.column_select)
-        query = f"SELECT {fields_format} FROM {self.table_name}"
-
-        cursor = self.database.cursor()
-
-        cursor.execute(query)
-
-        self.fields = cursor.fetchall()
-
-        return self.fields
-
  
 class Model(with_metaclass(ModelBase)):
     table_name = ""
@@ -199,13 +191,17 @@ class Model(with_metaclass(ModelBase)):
             setattr(self, k, kwargs[k])
 
     @classmethod
-    def select(cls, *fields):
-        if not fields:
-            fields = cls.define_attr()
-
+    def select(cls, *fields) -> ModelSelect:
         cls.columns = cls.define_attr()
-        return ModelSelect(cls, *fields)
 
+        if not fields:
+            return ModelSelect(cls, *cls.columns)
+
+        if isinstance(*fields, ModelSelect):
+            return fields[0]
+
+        return ModelSelect(cls, *fields)
+    
     @classmethod
     def create(cls, **kwargs):
         inst = cls(**kwargs)
@@ -213,24 +209,35 @@ class Model(with_metaclass(ModelBase)):
         return inst
     
     @classmethod
-    def delete(cls):
-        pass
+    def delete(cls, select_fields: ModelSelect) -> int:
+        q = 0
+        for field in select_fields:       
+            columns = cls.columns
+            values = map(lambda x: f"'{x}'", field)
+
+            query = f"DELETE FROM {cls.table_name} WHERE "
+
+            delete_values = []
+            for col, val in zip(columns, values):
+                delete_values.append(col + " = " + val)
+
+            query += " AND ".join(delete_values)
+
+            cursor = cls.database.cursor()
+            
+            cursor.execute(query)
+
+            q += 1
+        return q
 
     @classmethod
-    def insert(cls, **kwargs):
-        pass
-    
-    @classmethod
-    def where(cls, **expressions):
-        query = f"SELECT FROM {self.table_name} WHERE "
-    
-    @classmethod
-    def define_attr(cls):
+    def define_attr(cls) -> list:
         fields = []
         for field in cls.__dict__:
             if (field[:2] != '__' and 
                 field != "table_name" and 
-                field != "model_name"):
+                field != "model_name" and
+                field != "columns"):
                 # only new attr which we create
                 fields.append(cls.__dict__[field].column_name)
 

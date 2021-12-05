@@ -23,8 +23,10 @@ class Tracks(BaseModel):
 
 # print(Tracks.select())
 
-print(Tracks.select(Tracks.album_id == 4))
-
+print(Tracks.delete(Tracks.album_id == 3))
+print(Tracks.select(Tracks.album_id == 3))
+k = Artist.create(artist_id=341334, name='Alisher')
+print(k.name)
 # cursor = conn.cursor()
 # cursor.execute("SELECT * FROM Track WHERE Name = 'Balls to the Wall'")
 # print(cursor.fetchall())
