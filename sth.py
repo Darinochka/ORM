@@ -24,6 +24,7 @@ class SqliteDatabase():
     def commit(self):
         self._conn.commit()
 
+
 class Field:
     field_type = 'DEFAULT'
 
@@ -101,13 +102,80 @@ class ModelBase(type):
         return len(self.select()) != 0
     __nonzero__ = __bool__  # Python 2.
 
-class ModelSelect:
+class Select:
     def __init__(self, model, *fields):
         self.table_name = model.table_name
         self.database = model.database
         self.column_select = fields
         self.columns = model.columns
+    
+    def execute(self, query):
+        field = self.column_select[0]
+        fields_format = ', '.join(self.columns)
 
+        cursor = self.database.cursor()
+
+        cursor.execute(query.format(
+            oper=self.operation,
+            fields=fields_format, 
+            table_name=self.table_name,
+            field=field)
+        )
+
+        self.fields = cursor.fetchall()
+        
+        return self.fields
+
+    def __eq__(self, attr):
+
+        query = "{oper} {fields} FROM {table_name} WHERE {field} = '%s'" % attr
+        
+        return self.execute(query)
+
+    def __lt__(self, attr):
+
+        query = "{oper} {fields} FROM {table_name} WHERE {field} < '%s'" % attr
+
+        return self.execute(query)
+
+    def __le__(self, attr):
+
+        query = "{oper} {fields} FROM {table_name} WHERE {field} <= '%s'" % attr
+        
+        return self.execute(query)
+
+    def __ne__(self, attr):
+        query = "{oper} {fields} FROM {table_name} WHERE {field} != '%s'" % attr
+        
+        return self.execute(query)
+
+    def __ge__(self, attr):
+        query = "{oper} {fields} FROM {table_name} WHERE {field} != '%s'" % attr
+        
+        return self.execute(query)
+
+    def __repr__(self):
+        return str(self.fields)
+
+    def __str__(self):
+        return str(self.fields)
+
+    def __iter__(self):
+        return iter(self.fields)
+
+    def __contains__(self, item):
+        return item in self.fields
+
+
+class ModelDelete(Select):
+    def __init__(self, model, *fields):
+        super().__init__(model, *fields)
+        self.operation = 'DELETE'
+
+class ModelSelect(Select):
+    def __init__(self, model, *fields):
+        super().__init__(model, *fields)
+        self.operation = 'SELECT'
         self.select()
 
     def select(self):
@@ -122,66 +190,7 @@ class ModelSelect:
 
         return self.fields
 
-    def delete(self):
-        fields_format = ', '.join(self.column_select)
-        query = f"SELECT {fields_format} FROM {self.table_name}"
-
-    def execute(self, query):
-        field = self.column_select[0]
-        fields_format = ', '.join(self.columns)
-
-        cursor = self.database.cursor()
-
-        cursor.execute(query.format(
-            fields=fields_format, 
-            table_name=self.table_name,
-            field=field)
-        )
-
-        self.fields = cursor.fetchall()
-        
-        return self.fields
-
-    def __eq__(self, attr):
-
-        query = "SELECT {fields} FROM {table_name} WHERE {field} = '%s'" % attr
-        
-        return self.execute(query)
-
-    def __lt__(self, attr):
-
-        query = "SELECT {fields} FROM {table_name} WHERE {field} < '%s'" % attr
-
-        return self.execute(query)
-
-    def __le__(self, attr):
-
-        query = "SELECT {fields} FROM {table_name} WHERE {field} <= '%s'" % attr
-        
-        return self.execute(query)
-
-    def __ne__(self, attr):
-        query = "SELECT {fields} FROM {table_name} WHERE {field} != '%s'" % attr
-        
-        return self.execute(query)
-
-    def __ge__(self, attr):
-        query = "SELECT {fields} FROM {table_name} WHERE {field} != '%s'" % attr
-        
-        return self.execute(query)
-
-    def __repr__(self):
-        return str(self.fields)
-
-    def __str__(self):
-        return str(self.fields)
-
-    def __iter__(self):
-        return iter(self.fields)
-
-    def __contains__(self, item):
-        return (item,) in self.fields
-
+ 
 class Model(with_metaclass(ModelBase)):
     table_name = ""
 

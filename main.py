@@ -23,7 +23,7 @@ class Tracks(BaseModel):
 
 # print(Tracks.select())
 
-print((371, 'Morro Da Casa Verde 2001', 32) in Tracks)
+print(Tracks.select(Tracks.album_id == 4))
 
 # cursor = conn.cursor()
 # cursor.execute("SELECT * FROM Track WHERE Name = 'Balls to the Wall'")
