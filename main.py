@@ -1,6 +1,7 @@
 # from peewee import *
 from sth import *
 
+
 conn = SqliteDatabase('chinook.sqlite')
 
 class BaseModel(Model):
@@ -16,16 +17,21 @@ class Artist(BaseModel):
 class Tracks(BaseModel):
     track_id = IntegerField(column_name='TrackId')
     name = TextField(column_name="Name")
+    album_id = IntegerField(column_name="AlbumId")
 
     table_name = 'Track'
 
-print(Tracks.name == 'Balls to the Wall')
+# print(Tracks.select())
 
+print((371, 'Morro Da Casa Verde 2001', 32) in Tracks)
 
+# cursor = conn.cursor()
+# cursor.execute("SELECT * FROM Track WHERE Name = 'Balls to the Wall'")
+# print(cursor.fetchall())
 
 # SELECT Name, ArtistID FROM Artist;
 
-# print(Artist.select('Name', 'ArtistId'))
+# print(Artist.name)
 
 # srh = Artist(artist_id=122324, name="Mika")
 # srh.save()
