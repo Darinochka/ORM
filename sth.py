@@ -32,43 +32,46 @@ class Field:
         self.column_name = column_name
 
     def __set_name__(self, owner, name):
-        self._name = self.column_name
+        self._name = name
 
     def __get__(self, obj, instance_type=None):
+        if obj == None:
+            return instance_type.select(self._name)
+
         return obj.__dict__[self.column_name]
     
     def __set__(self, obj, value):
         obj.__dict__[self.column_name] = value
-
+    
 
 class _StringField(Field):
-    def adapt(self, value):
-        if isinstance(value, str):
-            return value
-        elif isinstance(value, bytes):
-            return value.decode('utf-8')
-        return str(value)
+
+    def __set__(self, obj, value):
+        if not isinstance(value, str):
+            raise TypeError("Please, enter data of STRING type")
+        super().__set__(obj, value)
+
 
 class TextField(_StringField):
     field_type = 'TEXT'
 
+
 class CharField(_StringField):
     field_type = 'VARCHAR'
+
+    def __set__(self, obj, value):
+        if len(value) > 1:
+            raise TypeError(f"Please, enter data of {self.field_type} type")
+        super().__set__(obj, value)
+
 
 class IntegerField(Field):
     field_type = 'INT'
 
     def __set__(self, obj, value):
         if not isinstance(value, int):
-            raise TypeError()
+            raise TypeError(f"Please, enter data of {self.field_type} type")
         super().__set__(obj, value)
-
-
-    def adapt(self, value):
-        try:
-            return int(value)
-        except ValueError:
-            return value
 
 
 class ModelBase(type):
@@ -91,6 +94,16 @@ class ModelBase(type):
     def __iter__(self):
         return iter(self.select())
 
+    def __len__(self):
+        return len(self.select())
+    
+    def __bool__(self):
+        return len(self.select()) != 0
+    __nonzero__ = __bool__  # Python 2.
+
+class ModelSelect():
+    def __init__(self, model, *fields):
+        pass
 
 class Model(with_metaclass(ModelBase)):
     table_name = ""
@@ -98,7 +111,6 @@ class Model(with_metaclass(ModelBase)):
     def __init__(self, *args, **kwargs):
         for k in kwargs:
             setattr(self, k, kwargs[k])
-        
 
     @classmethod
     def select(cls, *fields):
@@ -130,7 +142,7 @@ class Model(with_metaclass(ModelBase)):
     
     @classmethod
     def where(cls, **expressions):
-        pass
+        query = f"SELECT FROM {self.table_name} WHERE "
     
     @classmethod
     def define_attr(cls):
@@ -185,3 +197,4 @@ class Model(with_metaclass(ModelBase)):
 
     def __ne__(self, other):
         return not self == other
+    

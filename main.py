@@ -19,8 +19,10 @@ class Tracks(BaseModel):
 
     table_name = 'Track'
 
+print(Tracks.name == 'Balls to the Wall')
 
-print(Tracks == Tracks)
+
+
 # SELECT Name, ArtistID FROM Artist;
 
 # print(Artist.select('Name', 'ArtistId'))
