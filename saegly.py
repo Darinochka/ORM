@@ -76,6 +76,15 @@ class IntegerField(Field):
         super().__set__(obj, value)
 
 
+class FloatField(Field):
+    field_type = 'FLOAT'
+
+    def __set__(self, obj, value):
+        if not isinstance(value, float):
+            raise TypeError(f"Please, enter data of {self.field_type} type")
+        super().__set__(obj, value)
+
+
 class ModelBase(type):
     database = ""
     model_name = ""
@@ -128,6 +137,7 @@ class ModelSelect:
     def execute(self, query: str):
         if len(self.column_select) != 1:
             raise ValueError("You select some columns! Select one column for comparing.")
+
         field = self.column_select[0]
         fields_format = ', '.join(self.columns)
 
@@ -146,7 +156,7 @@ class ModelSelect:
 
     def __eq__(self, attr):
         
-        if not isinstance(attr, ModelSelect):
+        if isinstance(attr, str) or isinstance(attr, int):
             query = "{oper} {fields} FROM {table_name} WHERE {field} = '%s'" % attr
 
             return self.execute(query)
@@ -163,10 +173,13 @@ class ModelSelect:
             raise TypeError("You enter wrong types")
 
     def __le__(self, attr):
-
-        query = "{oper} {fields} FROM {table_name} WHERE {field} <= '%s'" % attr
         
-        return self.execute(query)
+        if not isinstance(attr, ModelSelect):
+            query = "{oper} {fields} FROM {table_name} WHERE {field} <= '%s'" % attr
+
+            return self.execute(query)
+        else:
+            raise TypeError("You enter wrong types")
 
     def __ne__(self, attr):
 
@@ -178,9 +191,13 @@ class ModelSelect:
         return self.fields != attr.fields
 
     def __ge__(self, attr):
-        query = "{oper} {fields} FROM {table_name} WHERE {field} >= '%s'" % attr
-        
-        return self.execute(query)
+
+        if not isinstance(attr, ModelSelect):
+            query = "{oper} {fields} FROM {table_name} WHERE {field} >= '%s'" % attr
+
+            return self.execute(query)
+        else:
+            raise TypeError("You enter wrong types")
 
     def __repr__(self):
         return str(self.fields)
@@ -210,8 +227,22 @@ class Model(with_metaclass(ModelBase)):
             setattr(self, k, kwargs[k])
 
     @classmethod
-    def select(cls, *fields) -> ModelSelect:
-        cls.columns = cls.define_attr()
+    def select(cls, *fields : Union[None, list, ModelSelect]) -> ModelSelect:
+        """
+        Arguments
+        ---------
+        *fields : None | tuple <str> | tuple <ModelSelect>
+                    Fields for selection.
+
+                -if None : select all columns in Mode\n
+                -if tuple<str> : select these fields\n
+                -if ModelSelect : select this
+        Return
+        ------
+        ModelSelect
+            Selecting fields
+        """
+        cls.columns = cls._define_attr()
 
         if not fields:
             return ModelSelect(cls, *cls.columns)
@@ -223,12 +254,38 @@ class Model(with_metaclass(ModelBase)):
     
     @classmethod
     def create(cls, **kwargs):
+        """
+        Create new row in database.
+
+        Arguments
+        ---------
+        **kwargs : columns and their arguments
+
+        Return
+        ------
+        Model 
+            instanse of metaclass
+        """
         inst = cls(**kwargs)
         inst.save()
         return inst
     
     @classmethod
     def delete(cls, select_fields: ModelSelect) -> int:
+        """
+        Delete selecting rows and returned number of deleted fields
+        rows.
+
+        Arguments
+        ---------
+        select_fields : ModelSelect
+                        fields to be deleted
+        
+        Return
+        ------
+        int
+            number of deleted fields
+        """
         q = 0
         for field in select_fields:       
             columns = cls.columns
@@ -250,7 +307,7 @@ class Model(with_metaclass(ModelBase)):
         return q
 
     @classmethod
-    def define_attr(cls) -> list:
+    def _define_attr(cls) -> list:
         fields = []
         for field in cls.__dict__:
             if (field[:2] != '__' and 
@@ -263,6 +320,9 @@ class Model(with_metaclass(ModelBase)):
         return fields
 
     def delete_instance(self):
+        """
+        Delete this instance from database.
+        """
         columns = self.__dict__.keys()
         values = map(lambda x: f"'{x}'", self.__dict__.values())
 
@@ -279,13 +339,16 @@ class Model(with_metaclass(ModelBase)):
         cursor.execute(query)
 
     def save(self):
+        """
+        Save instance in database.
+        """
         columns = ",".join(self.__dict__.keys())
         values = ",".join(map(lambda x: f"'{x}'", self.__dict__.values()))
 
         query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({values})"
 
         cursor = self.database.cursor()
-        
+
         cursor.execute(query)
 
         return cursor.fetchall()

@@ -1,5 +1,5 @@
 # from peewee import *
-from sth import *
+from saegly import *
 
 
 conn = SqliteDatabase('chinook.sqlite')
@@ -18,38 +18,44 @@ class Tracks(BaseModel):
     track_id = IntegerField(column_name='TrackId')
     name = TextField(column_name="Name")
     album_id = IntegerField(column_name="AlbumId")
-
+    media_types = IntegerField(column_name="MediaTypeId")
+    genre_id = IntegerField(column_name="GenreId")
+    composer = TextField(column_name="Composer")
+    milliseconds = IntegerField(column_name="Milliseconds")
+    bytes_ = IntegerField(column_name="Bytes")
+    unit_price = FloatField(column_name="UnitPrice")
     table_name = 'Track'
 
 
-# SELECT Name, ArtistId FROM Artist;
-# print(Artist.select())
-print(Artist.select() == Artist.select("ArtistId", "Name"))
-# ДОБАВИТЬ В MAGIC METHOD ПРОВЕРКУ НА MODELSELECT ЧТОБЫ ВЫДАВАТЬ TYPEERROR
-# srh = Artist(artist_id=122324, name="Mika")
-# srh.save()
+def main():
 
-# alish = Artist.create(artist_id=3242394, name='KAlisher')
-# print(alish.name)
+    print('SELECT ArtistId, Name FROM Artist')
+    assert(Artist.select() == Artist.select("ArtistId", "Name"))
+    print(Artist.select())
 
-# print(alish.delete_instance())
-# print(srh.delete_instance())
+    print('SELECT ArtistId FROM Artist')
+    assert(Artist.select("ArtistId") == Artist.artist_id)
+    print(Artist.artist_id)
 
-# tracks = Tracks.select('Name')
-# print(tracks)
-#INSERT INTO Artist (Name, ArtistId)
-#  	VALUES ("Darina", 300), ("Karina", 304);
-# Artist.insert(artist_data)
-# print(artists)
-# UPDATE Track SET Name = "Dima", ArtistId = 250;
-# Track.update(
-#     new_track={"Name": "Dima", "ArtistId": 250}
-# )
+    print('SELECT TrackId, Name, AlbumId FROM Track WHERE AlbumId = 4')
+    print(Tracks.select(Tracks.album_id == 4))
 
-# # DELETE FROM t;
-# Track.delete()
+    # INSERT INTO Tracks VALUES (323423, "Монетка", '12')
+    lsp = Artist.create(artist_id=343224, name="LSP")
+    assert(lsp.name == 'LSP')
 
-# Artist.save()
-# print(artists)
+    dirty = Artist(artist_id=23434, name="Gryaz")
+    assert(dirty.artist_id == 23434)
+    dirty.save()
 
-conn.close()
+    # DELETE
+    dirty.delete_instance()
+
+    print('DELETE FROM Tracks WHERE album_id = 3')
+    print(Tracks.select(Tracks.album_id == 3))
+    print(Tracks.delete(Tracks.album_id == 3))
+
+    conn.close()
+
+if __name__ == "__main__":
+    main()
