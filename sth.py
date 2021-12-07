@@ -126,6 +126,8 @@ class ModelSelect:
         return self
 
     def execute(self, query: str):
+        if len(self.column_select) != 1:
+            raise ValueError("You select some columns! Select one column for comparing.")
         field = self.column_select[0]
         fields_format = ', '.join(self.columns)
 
@@ -143,16 +145,22 @@ class ModelSelect:
         return self
 
     def __eq__(self, attr):
-
-        query = "{oper} {fields} FROM {table_name} WHERE {field} = '%s'" % attr
         
-        return self.execute(query)
+        if not isinstance(attr, ModelSelect):
+            query = "{oper} {fields} FROM {table_name} WHERE {field} = '%s'" % attr
+
+            return self.execute(query)
+        
+        return self.fields == attr.fields
 
     def __lt__(self, attr):
+        
+        if not isinstance(attr, ModelSelect):
+            query = "{oper} {fields} FROM {table_name} WHERE {field} < '%s'" % attr
 
-        query = "{oper} {fields} FROM {table_name} WHERE {field} < '%s'" % attr
-
-        return self.execute(query)
+            return self.execute(query)
+        else:
+            raise TypeError("You enter wrong types")
 
     def __le__(self, attr):
 
@@ -161,12 +169,16 @@ class ModelSelect:
         return self.execute(query)
 
     def __ne__(self, attr):
-        query = "{oper} {fields} FROM {table_name} WHERE {field} != '%s'" % attr
+
+        if not isinstance(attr, ModelSelect):
+            query = "{oper} {fields} FROM {table_name} WHERE {field} != '%s'" % attr
+            print(query)
+            return self.execute(query)
         
-        return self.execute(query)
+        return self.fields != attr.fields
 
     def __ge__(self, attr):
-        query = "{oper} {fields} FROM {table_name} WHERE {field} != '%s'" % attr
+        query = "{oper} {fields} FROM {table_name} WHERE {field} >= '%s'" % attr
         
         return self.execute(query)
 
@@ -182,7 +194,14 @@ class ModelSelect:
     def __contains__(self, item):
         return item in self.fields
 
+    def __len__(self):
+        return len(self.fields)
+    
+    def __bool__(self):
+        return len(self.fields) != 0
+    __nonzero__ = __bool__ # Python 2.
  
+
 class Model(with_metaclass(ModelBase)):
     table_name = ""
 
@@ -197,7 +216,7 @@ class Model(with_metaclass(ModelBase)):
         if not fields:
             return ModelSelect(cls, *cls.columns)
 
-        if isinstance(*fields, ModelSelect):
+        if isinstance(fields[0], ModelSelect):
             return fields[0]
 
         return ModelSelect(cls, *fields)
