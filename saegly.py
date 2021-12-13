@@ -50,7 +50,7 @@ class _StringField(Field):
 
     def __set__(self, obj, value):
         if not isinstance(value, str):
-            raise TypeError(f"Please, enter data of {self.field_type} type")
+            raise TypeError(f"You enter type {type(value)} instead of {self.field_type}")
         super().__set__(obj, value)
 
 
@@ -63,7 +63,7 @@ class CharField(_StringField):
 
     def __set__(self, obj, value):
         if len(value) > 1:
-            raise TypeError(f"Please, enter data of {self.field_type} type")
+            raise TypeError(f"You enter type {type(value)} instead of {self.field_type}")
         super().__set__(obj, value)
 
 
@@ -72,7 +72,7 @@ class IntegerField(Field):
 
     def __set__(self, obj, value):
         if not isinstance(value, int):
-            raise TypeError(f"Please, enter data of {self.field_type} type")
+            raise TypeError(f"You enter type {type(value)} instead of {self.field_type}")
         super().__set__(obj, value)
 
 
@@ -81,7 +81,7 @@ class FloatField(Field):
 
     def __set__(self, obj, value):
         if not isinstance(value, float):
-            raise TypeError(f"Please, enter data of {self.field_type} type")
+            raise TypeError(f"You enter type {type(value)} instead of {self.field_type}")
         super().__set__(obj, value)
 
 

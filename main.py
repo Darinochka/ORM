@@ -1,11 +1,10 @@
-# from peewee import *
 from saegly import *
 
 
 conn = SqliteDatabase('chinook.sqlite')
 
 class BaseModel(Model):
-    database = conn  # соединение с базой, из шаблона выше
+    database = conn  # соединение с базой
 
 # Определяем модель исполнителя
 class Artist(BaseModel):
@@ -47,7 +46,7 @@ def main():
     dirty = Artist(artist_id=23434, name="Gryaz")
     assert(dirty.artist_id == 23434)
     dirty.save()
-
+    
     # DELETE
     dirty.delete_instance()
 
@@ -55,6 +54,12 @@ def main():
     print(Tracks.select(Tracks.album_id == 3))
     print(Tracks.delete(Tracks.album_id == 3))
 
+    # ERRORS
+    try:
+        k = Artist(artist_id="345", name=4)
+    except TypeError:
+        print("Ошибка")
+    
     conn.close()
 
 if __name__ == "__main__":
